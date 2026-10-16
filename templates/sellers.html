@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Analytics — Commerce360 AI{% endblock %}
+{% block header_title %}Seller Marketplace Intelligence{% endblock %}
+{% block header_subtitle %}Merchant volume performance, regional footprint, and freight cost dynamics{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Active Sellers</div>
+            <div class="kpi-value text-primary">{{ total_sellers | format_int }}</div>
+            <div class="kpi-subtext">Registered marketplace merchants</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Merchant Revenue</div>
+            <div class="kpi-value">R$ {{ total_revenue | format_currency }}</div>
+            <div class="kpi-subtext">Gross item value fulfilled</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Avg Revenue / Seller</div>
+            <div class="kpi-value text-success">R$ {{ avg_revenue | format_currency }}</div>
+            <div class="kpi-subtext">Mean GMV per active merchant</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Avg Item Price</div>
+            <div class="kpi-value text-warning">R$ {{ avg_item_price | format_currency }}</div>
+            <div class="kpi-subtext">Average catalog unit price</div>
+        </div>
+    </div>
+</div>
+
+<!-- Seller Charts Row 1: Top Sellers by Revenue & Orders -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-trophy text-warning me-2"></i>Top 15 Sellers by Total Revenue</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-sellers-rev" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-box-seam text-primary me-2"></i>Top Sellers by Order Count</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-sellers-orders" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seller Charts Row 2: Regional Footprint & Revenue Spread -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-geo text-danger me-2"></i>Merchant Regional Origin (State Concentration)</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-state-rev" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-graph-up text-info me-2"></i>Merchant Revenue Distribution (Log Distribution)</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-rev-dist" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Sellers Detailed Master Table -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header">
+        <h6 class="dashboard-card-title"><i class="bi bi-table text-primary me-2"></i>Top Merchant League Table</h6>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Top 15 Performers</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Seller ID</th>
+                    <th>Origin State</th>
+                    <th>City</th>
+                    <th class="text-end">Orders Completed</th>
+                    <th class="text-end">Items Dispatched</th>
+                    <th class="text-end">Avg Item Price</th>
+                    <th class="text-end">Avg Freight</th>
+                    <th class="text-end">Total Gross Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in top_sellers_table %}
+                <tr>
+                    <td><code>{{ s.seller_id[:12] }}...</code></td>
+                    <td><span class="badge bg-secondary-subtle text-secondary">{{ s.seller_state }}</span></td>
+                    <td class="text-muted small">{{ s.seller_city }}</td>
+                    <td class="text-end fw-semibold">{{ s.seller_orders | format_int }}</td>
+                    <td class="text-end">{{ s.seller_items | format_int }}</td>
+                    <td class="text-end">R$ {{ s.average_item_price | format_currency }}</td>
+                    <td class="text-end text-muted">R$ {{ s.average_freight | format_currency }}</td>
+                    <td class="text-end fw-bold text-primary">R$ {{ s.seller_revenue | format_currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const sellersRevJson = {{ chart_sellers_rev | safe }};
+    Plotly.newPlot('chart-sellers-rev', sellersRevJson.data, sellersRevJson.layout, {responsive: true});
+
+    const sellersOrdersJson = {{ chart_sellers_orders | safe }};
+    Plotly.newPlot('chart-sellers-orders', sellersOrdersJson.data, sellersOrdersJson.layout, {responsive: true});
+
+    const stateRevJson = {{ chart_state_rev | safe }};
+    Plotly.newPlot('chart-state-rev', stateRevJson.data, stateRevJson.layout, {responsive: true});
+
+    const revDistJson = {{ chart_rev_dist | safe }};
+    Plotly.newPlot('chart-rev-dist', revDistJson.data, revDistJson.layout, {responsive: true});
+</script>
+{% endblock %}

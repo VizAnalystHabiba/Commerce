@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Intelligence — Commerce360 AI{% endblock %}
+{% block header_title %}Delivery Intelligence & Predictive Logistics{% endblock %}
+{% block header_subtitle %}Fulfillment operations analytics (descriptive) and leakage-free ML delay prediction (predictive){% endblock %}
+
+{% block content %}
+<!-- Section A: Historical Delivery Operations -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Part 1: Descriptive Historical Logistics Analytics</h5>
+    <span class="badge bg-primary-subtle text-primary border">Historical Delivered Orders</span>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Fulfilled Orders</div>
+            <div class="kpi-value text-primary">{{ del_summary.total_delivered | format_int }}</div>
+            <div class="kpi-subtext">Delivered status</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">On-Time Orders</div>
+            <div class="kpi-value text-success">{{ del_summary.on_time | format_int }}</div>
+            <div class="kpi-subtext">Arrived on/before promise</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Delayed Orders</div>
+            <div class="kpi-value text-danger">{{ del_summary.delayed | format_int }}</div>
+            <div class="kpi-subtext">Past estimated delivery</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">On-Time Rate</div>
+            <div class="kpi-value {% if del_summary.on_time_pct >= 90 %}text-success{% else %}text-danger{% endif %}">{{ del_summary.on_time_pct }}%</div>
+            <div class="kpi-subtext">SLA benchmark: 90%+</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Avg Delivery Cycle</div>
+            <div class="kpi-value">{{ del_summary.avg_delivery_days }} <span class="fs-6 text-muted fw-normal">days</span></div>
+            <div class="kpi-subtext">Purchase to delivery</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Avg Delay Period</div>
+            <div class="kpi-value text-danger">{{ del_summary.avg_delay_days }} <span class="fs-6 text-muted fw-normal">days</span></div>
+            <div class="kpi-subtext">Overdue window on late orders</div>
+        </div>
+    </div>
+</div>
+
+<!-- Historical Delivery Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-pie-chart text-success me-2"></i>Fulfillment SLA Compliance Ratio</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-del-pie" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-hourglass-split text-danger me-2"></i>Delay Severity Distribution (Delayed Orders Only)</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-del-delay" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-lg-7">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-geo-alt-fill text-primary me-2"></i>Delivery Speed by Destination State (Transit Bottlenecks)</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-del-state" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-graph-up text-info me-2"></i>Monthly Fulfillment Reliability Trend</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-del-trend" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section B: Predictive Machine Learning -->
+<div class="border-top pt-4 mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cpu me-2 text-warning"></i>Part 2: Predictive Machine Learning (Pre-Delivery Delay Risk)</h5>
+        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Leakage-Free Architecture</span>
+    </div>
+    <p class="text-muted small">
+        <strong>Academic & Industrial Rigor:</strong> Unlike naive baselines that leak the target by using <code>delivery_days</code>, 
+        this model strictly utilizes <strong>pre-delivery features</strong> available at the moment of order placement.
+    </p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-bar-chart text-primary me-2"></i>Pre-Delivery ML Classification Performance</h6>
+                <span class="badge bg-light text-muted border">Class Balanced</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-ml-metrics" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-sort-down-alt text-success me-2"></i>Feature Importances (Random Forest)</h6>
+                <span class="badge bg-light text-muted border">Gini Impurity</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-feat-imp" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ML Evaluation Table -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header">
+        <h6 class="dashboard-card-title"><i class="bi bi-table text-primary me-2"></i>Model Evaluation Comparison Table</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Model Architecture</th>
+                    <th class="text-end">Accuracy</th>
+                    <th class="text-end">Precision</th>
+                    <th class="text-end">Recall (Sensitivity)</th>
+                    <th class="text-end">F1-Score</th>
+                    <th class="text-end">ROC-AUC</th>
+                    <th>Analytical Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in ml_table %}
+                <tr>
+                    <td class="fw-bold">{{ row.model }}</td>
+                    <td class="text-end">{{ row.accuracy }}</td>
+                    <td class="text-end">{{ row.precision }}</td>
+                    <td class="text-end fw-semibold {% if row.recall > 0.5 %}text-success{% endif %}">{{ row.recall }}</td>
+                    <td class="text-end">{{ row.f1_score }}</td>
+                    <td class="text-end fw-bold text-primary">{{ row.roc_auc }}</td>
+                    <td class="small text-muted">
+                        {% if 'Random Forest' in row.model %}
+                        Optimal discriminative ability (AUC 0.721) for scoring checkout risk.
+                        {% else %}
+                        High sensitivity (Recall 0.645) to flag potential delayed shipments early.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const delPieJson = {{ chart_del_pie | safe }};
+    Plotly.newPlot('chart-del-pie', delPieJson.data, delPieJson.layout, {responsive: true});
+
+    const delDelayJson = {{ chart_del_delay | safe }};
+    Plotly.newPlot('chart-del-delay', delDelayJson.data, delDelayJson.layout, {responsive: true});
+
+    const delStateJson = {{ chart_del_state | safe }};
+    Plotly.newPlot('chart-del-state', delStateJson.data, delStateJson.layout, {responsive: true});
+
+    const delTrendJson = {{ chart_del_trend | safe }};
+    Plotly.newPlot('chart-del-trend', delTrendJson.data, delTrendJson.layout, {responsive: true});
+
+    const mlMetricsJson = {{ chart_ml_metrics | safe }};
+    Plotly.newPlot('chart-ml-metrics', mlMetricsJson.data, mlMetricsJson.layout, {responsive: true});
+
+    const featImpJson = {{ chart_feat_imp | safe }};
+    Plotly.newPlot('chart-feat-imp', featImpJson.data, featImpJson.layout, {responsive: true});
+</script>
+{% endblock %}

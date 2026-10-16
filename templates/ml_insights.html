@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Machine Learning Insights — Commerce360 AI{% endblock %}
+{% block header_title %}Machine Learning Intelligence & Evaluation{% endblock %}
+{% block header_subtitle %}Supervised delay risk modeling (leakage-free) and unsupervised customer segmentation{% endblock %}
+
+{% block content %}
+<!-- Model 1: Pre-Delivery Delay Risk Classification -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header bg-white">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-shield-check text-success me-2"></i>Model 1: Pre-Delivery Delay Risk Classifier</h5>
+            <small class="text-muted">Supervised binary classification | Target: <code>is_delayed</code> (1 = Delayed, 0 = On Time)</small>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+            <i class="bi bi-lock me-1"></i> Zero Target Leakage
+        </span>
+    </div>
+    <div class="dashboard-card-body">
+        <div class="row g-4 mb-4">
+            <div class="col-lg-7">
+                <div id="chart-ml-metrics" class="plotly-chart-container"></div>
+            </div>
+            <div class="col-lg-5">
+                <div id="chart-feat-imp" class="plotly-chart-container"></div>
+            </div>
+        </div>
+
+        <div class="table-responsive mb-4">
+            <table class="table table-custom table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Model Algorithm</th>
+                        <th class="text-end">Accuracy</th>
+                        <th class="text-end">Precision</th>
+                        <th class="text-end">Recall</th>
+                        <th class="text-end">F1-Score</th>
+                        <th class="text-end">ROC-AUC</th>
+                        <th>Class Balancing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in ml_results %}
+                    <tr>
+                        <td class="fw-bold">{{ m.model }}</td>
+                        <td class="text-end">{{ m.accuracy }}</td>
+                        <td class="text-end">{{ m.precision }}</td>
+                        <td class="text-end fw-semibold {% if m.recall > 0.5 %}text-success{% endif %}">{{ m.recall }}</td>
+                        <td class="text-end">{{ m.f1_score }}</td>
+                        <td class="text-end fw-bold text-primary">{{ m.roc_auc }}</td>
+                        <td><span class="badge bg-light text-dark border">class_weight='balanced'</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="alert alert-light border small text-muted mb-0">
+            <strong><i class="bi bi-info-circle text-primary me-1"></i> Data Leakage Prevention Rationale:</strong>
+            Standard academic implementations mistakenly use <code>delivery_days</code> to predict <code>on_time_flag</code>, which creates trivial target leakage because the actual delivery date is known only after arrival. 
+            Commerce360 AI uses <em>strictly pre-delivery features</em> (freight value, package volume/dimensions, estimated delivery window, same-state dispatch, and purchase calendar indicators). 
+            Our Random Forest achieves an honest, academically sound <strong>ROC-AUC of 0.7214</strong> on heavily imbalanced test data (~7% delay rate).
+        </div>
+    </div>
+</div>
+
+<!-- Model 2: Customer Behavioral Clustering -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header bg-white">
+        <div>
+            <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-diagram-3 text-primary me-2"></i>Model 2: Customer Behavioral Segmentation (K-Means)</h5>
+            <small class="text-muted">Unsupervised clustering | k = 4 | Features: Spending, Orders, AOV, Items, Recency</small>
+        </div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+            Silhouette Score: 0.3958
+        </span>
+    </div>
+    <div class="dashboard-card-body">
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div id="chart-seg-scatter" class="plotly-chart-container"></div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-custom table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Cluster Segment</th>
+                        <th class="text-end">Customer Count</th>
+                        <th class="text-end">Mean Spending</th>
+                        <th class="text-end">Mean Orders</th>
+                        <th class="text-end">Mean Basket Size</th>
+                        <th class="text-end">Mean Recency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for seg in summary_list %}
+                    <tr>
+                        <td class="fw-bold">{{ seg.segment_name }}</td>
+                        <td class="text-end fw-semibold">{{ seg.customer_count | format_int }}</td>
+                        <td class="text-end fw-bold text-primary">R$ {{ seg.avg_spending | format_currency }}</td>
+                        <td class="text-end">{{ seg.avg_orders }}</td>
+                        <td class="text-end">R$ {{ seg.avg_order_value | format_currency }}</td>
+                        <td class="text-end text-muted">{{ seg.avg_recency | format_int }} days</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const mlMetricsJson = {{ chart_ml_metrics | safe }};
+    Plotly.newPlot('chart-ml-metrics', mlMetricsJson.data, mlMetricsJson.layout, {responsive: true});
+
+    const featImpJson = {{ chart_feat_imp | safe }};
+    Plotly.newPlot('chart-feat-imp', featImpJson.data, featImpJson.layout, {responsive: true});
+
+    const segScatterJson = {{ chart_seg_scatter | safe }};
+    Plotly.newPlot('chart-seg-scatter', segScatterJson.data, segScatterJson.layout, {responsive: true});
+</script>
+{% endblock %}

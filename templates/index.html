@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Overview — Commerce360 AI{% endblock %}
+{% block header_title %}Executive Overview{% endblock %}
+{% block header_subtitle %}Top-level commercial trajectory and operations scorecard{% endblock %}
+
+{% block content %}
+<!-- Top Executive KPI Row -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Total Revenue</div>
+                    <div class="kpi-value text-primary">R$ {{ kpis.total_revenue | format_currency }}</div>
+                </div>
+                <div class="kpi-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext"><i class="bi bi-check2-circle text-success me-1"></i>Delivered orders</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Delivered Orders</div>
+                    <div class="kpi-value">{{ kpis.total_orders | format_int }}</div>
+                </div>
+                <div class="kpi-icon bg-info-subtle text-info">
+                    <i class="bi bi-bag-check"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Unique fulfilled orders</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Unique Customers</div>
+                    <div class="kpi-value">{{ kpis.total_customers | format_int }}</div>
+                </div>
+                <div class="kpi-icon bg-success-subtle text-success">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Active customer IDs</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Active Sellers</div>
+                    <div class="kpi-value">{{ kpis.total_sellers | format_int }}</div>
+                </div>
+                <div class="kpi-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-shop-window"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Marketplace merchants</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">Avg Delivery</div>
+                    <div class="kpi-value">{{ kpis.avg_delivery_days }} <span class="fs-6 fw-normal text-muted">days</span></div>
+                </div>
+                <div class="kpi-icon bg-secondary-subtle text-secondary">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Purchase to customer</div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-sm-6">
+        <div class="kpi-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="kpi-label">On-Time Rate</div>
+                    <div class="kpi-value {% if kpis.on_time_pct >= 90 %}text-success{% else %}text-danger{% endif %}">{{ kpis.on_time_pct }}%</div>
+                </div>
+                <div class="kpi-icon {% if kpis.on_time_pct >= 90 %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %}">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+            </div>
+            <div class="kpi-subtext">Fulfilled on/before promise</div>
+        </div>
+    </div>
+</div>
+
+<!-- Commercial Trends Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-graph-up text-primary me-2"></i>Monthly Revenue Trajectory</h6>
+                <span class="badge bg-light text-muted border">R$ Gross</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-rev-trend" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-bar-chart-line text-warning me-2"></i>Monthly Order Volume</h6>
+                <span class="badge bg-light text-muted border">Distinct Orders</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-orders-trend" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Product Categories & Fulfillment Distribution -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-pie-chart text-primary me-2"></i>Top Product Categories by Gross Revenue</h6>
+                <a href="{{ url_for('sales') }}" class="btn btn-sm btn-link text-decoration-none">View All Products &rarr;</a>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-cats" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-check2-circle text-success me-2"></i>Fulfillment Health Ratio</h6>
+                <a href="{{ url_for('delivery') }}" class="btn btn-sm btn-link text-decoration-none">Delivery Deep Dive &rarr;</a>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-del-pie" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fulfillment Duration Histogram -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-clock-history text-secondary me-2"></i>Actual Delivery Time Distribution</h6>
+                <span class="badge bg-secondary-subtle text-secondary border">Delivered Orders</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-del-hist" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Executive Summary Callout -->
+<div class="alert alert-primary border-primary-subtle d-flex align-items-center" role="alert">
+    <i class="bi bi-info-circle-fill fs-4 me-3 text-primary"></i>
+    <div>
+        <strong>Commercial Summary:</strong> The marketplace completed <strong>{{ kpis.total_orders | format_int }}</strong> delivered orders generating <strong>R$ {{ kpis.total_revenue | format_currency }}</strong>. Fulfillment on-time reliability is <strong>{{ kpis.on_time_pct }}%</strong> with an average cycle time of <strong>{{ kpis.avg_delivery_days }} days</strong> across <strong>{{ kpis.total_sellers | format_int }}</strong> active merchants.
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const revTrendJson = {{ chart_rev_trend | safe }};
+    Plotly.newPlot('chart-rev-trend', revTrendJson.data, revTrendJson.layout, {responsive: true});
+
+    const ordersTrendJson = {{ chart_orders_trend | safe }};
+    Plotly.newPlot('chart-orders-trend', ordersTrendJson.data, ordersTrendJson.layout, {responsive: true});
+
+    const catsJson = {{ chart_cats | safe }};
+    Plotly.newPlot('chart-cats', catsJson.data, catsJson.layout, {responsive: true});
+
+    const delPieJson = {{ chart_del_pie | safe }};
+    Plotly.newPlot('chart-del-pie', delPieJson.data, delPieJson.layout, {responsive: true});
+
+    const delHistJson = {{ chart_del_hist | safe }};
+    Plotly.newPlot('chart-del-hist', delHistJson.data, delHistJson.layout, {responsive: true});
+</script>
+{% endblock %}

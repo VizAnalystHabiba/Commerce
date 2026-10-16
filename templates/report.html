@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Intelligence Report — Commerce360 AI{% endblock %}
+{% block header_title %}Automated Executive Report{% endblock %}
+{% block header_subtitle %}10-Section consolidated e-commerce intelligence & decision report{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-file-earmark-text text-primary me-2"></i>Consolidated Executive Intelligence Report</h5>
+        <small class="text-muted">Synthesizes Sales, Products, Customers, Sellers, Logistics, CSAT, and ML models</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('download_report') }}" class="btn btn-primary">
+            <i class="bi bi-download me-1"></i> Download Report (.md)
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i> Print / PDF
+        </button>
+    </div>
+</div>
+
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-body p-4 p-md-5">
+        <div class="markdown-report-container">
+            {{ report_html | safe }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Analytics — Commerce360 AI{% endblock %}
+{% block header_title %}Customer Intelligence & Segmentation{% endblock %}
+{% block header_subtitle %}K-Means behavioral clustering (k=4), RFM profiles, and lifetime engagement{% endblock %}
+
+{% block content %}
+<!-- Segment Overview KPI Cards -->
+<div class="row g-3 mb-4">
+    {% for seg in summary_list %}
+    <div class="col-xl-3 col-md-6">
+        <div class="kpi-card border-top border-4 {% if 'High-Value' in seg.segment_name %}border-warning{% elif 'Frequent' in seg.segment_name %}border-success{% elif 'Low-Engagement' in seg.segment_name %}border-primary{% else %}border-danger{% endif %}">
+            <div class="kpi-label">{{ seg.segment_name }}</div>
+            <div class="kpi-value fs-3">{{ seg.customer_count | format_int }} <span class="fs-6 text-muted fw-normal">buyers</span></div>
+            <div class="mt-2 text-muted small">
+                <div><i class="bi bi-wallet2 me-1"></i> Avg Spend: <strong>R$ {{ seg.avg_spending | format_currency }}</strong></div>
+                <div><i class="bi bi-calendar3 me-1"></i> Avg Recency: <strong>{{ seg.avg_recency | format_int }} days</strong></div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Segmentation Charts Row 1 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-pie-chart-fill text-primary me-2"></i>Customer Segment Volume Share</h6>
+                <span class="badge bg-light text-muted border">k=4 Clusters</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-seg-size" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-cash-stack text-success me-2"></i>Average Expenditure per Customer Segment</h6>
+                <span class="badge bg-light text-muted border">R$ Median Ranked</span>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-seg-spend" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Segmentation Scatter & RFM Row 2 -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-scatter-chart text-warning me-2"></i>Recency vs. Spending Behavioral Map</h6>
+                <small class="text-muted">Sample of 5,000 customers</small>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-seg-scatter" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-bar-chart-steps text-info me-2"></i>Orders & Basket Value Comparison</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-rfm" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Segment Strategy Matrix -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header">
+        <h6 class="dashboard-card-title"><i class="bi bi-bullseye text-primary me-2"></i>Customer Segment Strategy & Action Plan</h6>
+        <span class="badge bg-success-subtle text-success border border-success-subtle">Decision Support</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Segment</th>
+                    <th class="text-end">Customers</th>
+                    <th class="text-end">Avg Spend</th>
+                    <th class="text-end">Avg Orders</th>
+                    <th class="text-end">Avg Recency</th>
+                    <th>Commercial Profile</th>
+                    <th>Recommended Marketing Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seg in summary_list %}
+                <tr>
+                    <td class="fw-bold">
+                        <span class="badge {% if 'High-Value' in seg.segment_name %}bg-warning-subtle text-warning border border-warning-subtle{% elif 'Frequent' in seg.segment_name %}bg-success-subtle text-success border border-success-subtle{% elif 'Low-Engagement' in seg.segment_name %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-danger-subtle text-danger border border-danger-subtle{% endif %}">
+                            {{ seg.segment_name }}
+                        </span>
+                    </td>
+                    <td class="text-end fw-semibold">{{ seg.customer_count | format_int }}</td>
+                    <td class="text-end fw-bold text-primary">R$ {{ seg.avg_spending | format_currency }}</td>
+                    <td class="text-end">{{ seg.avg_orders }}</td>
+                    <td class="text-end text-muted">{{ seg.avg_recency | format_int }} days</td>
+                    <td>
+                        {% if 'High-Value' in seg.segment_name %}
+                        Premium spenders generating disproportionate revenue share.
+                        {% elif 'Frequent' in seg.segment_name %}
+                        Brand advocates with repeat orders and sustained brand loyalty.
+                        {% elif 'Low-Engagement' in seg.segment_name %}
+                        Standard single-purchase buyers comprising majority customer volume.
+                        {% else %}
+                        Dormant buyers with long purchase inactivity (>300 days).
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if 'High-Value' in seg.segment_name %}
+                        <span class="text-success fw-semibold">VIP Perks:</span> Dedicated concierges, early drops, concierge retention.
+                        {% elif 'Frequent' in seg.segment_name %}
+                        <span class="text-primary fw-semibold">Loyalty Program:</span> Tiered cashbacks, subscription pass incentives.
+                        {% elif 'Low-Engagement' in seg.segment_name %}
+                        <span class="text-info fw-semibold">Nurture Email:</span> Category recommendations, 2nd-purchase discount coupons.
+                        {% else %}
+                        <span class="text-danger fw-semibold">Win-Back:</span> Limited-time discount vouchers and re-engagement emails.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const segSizeJson = {{ chart_seg_size | safe }};
+    Plotly.newPlot('chart-seg-size', segSizeJson.data, segSizeJson.layout, {responsive: true});
+
+    const segSpendJson = {{ chart_seg_spend | safe }};
+    Plotly.newPlot('chart-seg-spend', segSpendJson.data, segSpendJson.layout, {responsive: true});
+
+    const segScatterJson = {{ chart_seg_scatter | safe }};
+    Plotly.newPlot('chart-seg-scatter', segScatterJson.data, segScatterJson.layout, {responsive: true});
+
+    const rfmJson = {{ chart_rfm | safe }};
+    Plotly.newPlot('chart-rfm', rfmJson.data, rfmJson.layout, {responsive: true});
+</script>
+{% endblock %}

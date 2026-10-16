@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Reviews & Payments — Commerce360 AI{% endblock %}
+{% block header_title %}Customer Reviews & Payment Intelligence{% endblock %}
+{% block header_subtitle %}Satisfaction drivers, fulfillment impact on CSAT, and payment method behavior{% endblock %}
+
+{% block content %}
+<!-- Part 1: Reviews & Satisfaction Overview -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-star-fill me-2 text-warning"></i>Customer Satisfaction (CSAT) Intelligence</h5>
+    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Review Feedback</span>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Average Review Score</div>
+            <div class="kpi-value text-warning">{{ rev_summary.avg_score }} <span class="fs-6 text-muted fw-normal">/ 5.0</span></div>
+            <div class="kpi-subtext">Across all verified ratings</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Reviews</div>
+            <div class="kpi-value text-primary">{{ rev_summary.total_reviews | format_int }}</div>
+            <div class="kpi-subtext">Customer feedback submissions</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Positive Feedback Rate</div>
+            <div class="kpi-value text-success">{{ rev_summary.pct_positive }}%</div>
+            <div class="kpi-subtext">Ratings 4 or 5 stars</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Negative Feedback Rate</div>
+            <div class="kpi-value text-danger">{{ rev_summary.pct_negative }}%</div>
+            <div class="kpi-subtext">Ratings 1 or 2 stars</div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Charts Row -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-bar-chart-fill text-warning me-2"></i>Review Score Distribution (1-5)</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-rev-dist" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-truck text-danger me-2"></i>CSAT Score: On-Time vs. Delayed</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-rev-del" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-graph-up text-primary me-2"></i>Satisfaction Score Trajectory</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-rev-trend" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Part 2: Payment Intelligence -->
+<div class="border-top pt-4 mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-credit-card-2-front me-2 text-primary"></i>Payment Dynamics & Installment Behavior</h5>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Financial Analytics</span>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Payment Captured</div>
+            <div class="kpi-value text-primary">R$ {{ pay_summary.total_payment_value | format_currency }}</div>
+            <div class="kpi-subtext">Gross transaction volume</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Average Ticket Size</div>
+            <div class="kpi-value">R$ {{ pay_summary.avg_payment_value | format_currency }}</div>
+            <div class="kpi-subtext">Mean payment per transaction</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Avg Installments</div>
+            <div class="kpi-value text-info">{{ pay_summary.avg_installments }}x</div>
+            <div class="kpi-subtext">Average installment count</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Primary Payment Rail</div>
+            <div class="kpi-value text-success text-capitalize">{{ pay_summary.top_payment_method.replace('_', ' ') }}</div>
+            <div class="kpi-subtext">Most adopted payment channel</div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-pie-chart text-primary me-2"></i>Payment Channel Adoption</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-pay-type" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-wallet2 text-success me-2"></i>Gross Value by Payment Channel</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-pay-val" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-calendar2-range text-warning me-2"></i>Installment Plan Usage (1x - 12x)</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-pay-inst" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const revDistJson = {{ chart_rev_dist | safe }};
+    Plotly.newPlot('chart-rev-dist', revDistJson.data, revDistJson.layout, {responsive: true});
+
+    const revDelJson = {{ chart_rev_del | safe }};
+    Plotly.newPlot('chart-rev-del', revDelJson.data, revDelJson.layout, {responsive: true});
+
+    const revTrendJson = {{ chart_rev_trend | safe }};
+    Plotly.newPlot('chart-rev-trend', revTrendJson.data, revTrendJson.layout, {responsive: true});
+
+    const payTypeJson = {{ chart_pay_type | safe }};
+    Plotly.newPlot('chart-pay-type', payTypeJson.data, payTypeJson.layout, {responsive: true});
+
+    const payValJson = {{ chart_pay_val | safe }};
+    Plotly.newPlot('chart-pay-val', payValJson.data, payValJson.layout, {responsive: true});
+
+    const payInstJson = {{ chart_pay_inst | safe }};
+    Plotly.newPlot('chart-pay-inst', payInstJson.data, payInstJson.layout, {responsive: true});
+</script>
+{% endblock %}

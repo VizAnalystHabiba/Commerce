@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}AI Insights & Analytics Agents — Commerce360 AI{% endblock %}
+{% block header_title %}GenAI Business Insights & Autonomous Agents{% endblock %}
+{% block header_subtitle %}Factual, data-grounded AI intelligence and domain-specialized analytical agents{% endblock %}
+
+{% block content %}
+<!-- Status Banner -->
+<div class="alert {% if has_api_key %}alert-success border-success-subtle{% else %}alert-info border-info-subtle{% endif %} d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+        <i class="bi {% if has_api_key %}bi-check-circle-fill text-success{% else %}bi-info-circle-fill text-info{% endif %} fs-4 me-3"></i>
+        <div>
+            <strong>GenAI Engine Status:</strong> 
+            {% if has_api_key %}
+            Google Gemini 1.5 Flash Connected & Grounded in Real Data Layer.
+            {% else %}
+            Operating in <strong>Deterministic Factual Mode</strong>. All metrics and findings are 100% data-grounded and verified. (Set <code>GEMINI_API_KEY</code> in <code>.env</code> for live conversational LLM generation).
+            {% endif %}
+        </div>
+    </div>
+    <a href="{{ url_for('report') }}" class="btn btn-sm btn-primary">
+        <i class="bi bi-file-earmark-text me-1"></i> View Full Report
+    </a>
+</div>
+
+<!-- Navigation Tabs -->
+<ul class="nav nav-pills mb-4" id="aiTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="agents-tab" data-bs-toggle="pill" data-bs-target="#agents" type="button" role="tab">
+            <i class="bi bi-robot me-1"></i> Autonomous Analytics Agents
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="insights-tab" data-bs-toggle="pill" data-bs-target="#insights" type="button" role="tab">
+            <i class="bi bi-lightbulb me-1"></i> Domain AI Briefings
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="recommendations-tab" data-bs-toggle="pill" data-bs-target="#recommendations" type="button" role="tab">
+            <i class="bi bi-bullseye me-1"></i> Strategic Recommendations
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="aiTabsContent">
+    <!-- Tab 1: Autonomous Analytics Agents -->
+    <div class="tab-pane fade show active" id="agents" role="tabpanel">
+        <!-- Master Coordinator Agent Output -->
+        <div class="dashboard-card border-primary border-2 mb-4">
+            <div class="dashboard-card-header bg-primary-subtle">
+                <h6 class="dashboard-card-title text-primary"><i class="bi bi-diagram-3-fill me-2"></i>Master Coordinator Agent — Synthesis Output</h6>
+                <span class="badge bg-primary text-white">Multi-Agent Lead</span>
+            </div>
+            <div class="dashboard-card-body">
+                <p class="lead fs-6 text-dark">{{ coord_res.executive_summary }}</p>
+                <h6 class="fw-bold mt-4 mb-3 text-dark">Cross-Functional Strategic Directives:</h6>
+                <div class="list-group">
+                    {% for rec in coord_res.cross_functional_recommendations %}
+                    <div class="list-group-item d-flex align-items-center">
+                        <span class="badge bg-primary rounded-pill me-3">{{ loop.index }}</span>
+                        <span>{{ rec }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 Specialized Domain Agents Grid -->
+        <div class="row g-4 mb-4">
+            <!-- Sales Agent -->
+            <div class="col-lg-4">
+                <div class="dashboard-card h-100">
+                    <div class="dashboard-card-header bg-light">
+                        <h6 class="dashboard-card-title"><i class="bi bi-graph-up text-primary me-2"></i>{{ sales_res.agent_name }}</h6>
+                        <span class="badge bg-info-subtle text-info border">Sales Domain</span>
+                    </div>
+                    <div class="dashboard-card-body">
+                        <div class="mb-3">
+                            <div class="small text-muted">Analyzed Revenue</div>
+                            <div class="fs-4 fw-bold text-primary">R$ {{ sales_res.total_revenue | format_currency }}</div>
+                        </div>
+                        <ul class="list-unstyled small mb-0">
+                            {% for ins in sales_res.insights %}
+                            <li class="mb-2"><i class="bi bi-chevron-right text-primary me-1"></i>{{ ins }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Agent -->
+            <div class="col-lg-4">
+                <div class="dashboard-card h-100">
+                    <div class="dashboard-card-header bg-light">
+                        <h6 class="dashboard-card-title"><i class="bi bi-people text-success me-2"></i>{{ cust_res.agent_name }}</h6>
+                        <span class="badge bg-success-subtle text-success border">Retention Domain</span>
+                    </div>
+                    <div class="dashboard-card-body">
+                        <div class="mb-3">
+                            <div class="small text-muted">Customer Base</div>
+                            <div class="fs-4 fw-bold text-success">{{ cust_res.total_customers | format_int }} buyers</div>
+                        </div>
+                        <ul class="list-unstyled small mb-0">
+                            {% for ins in cust_res.insights %}
+                            <li class="mb-2"><i class="bi bi-chevron-right text-success me-1"></i>{{ ins }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delivery Agent -->
+            <div class="col-lg-4">
+                <div class="dashboard-card h-100">
+                    <div class="dashboard-card-header bg-light">
+                        <h6 class="dashboard-card-title"><i class="bi bi-truck text-danger me-2"></i>{{ del_res.agent_name }}</h6>
+                        <span class="badge bg-danger-subtle text-danger border">Logistics Domain</span>
+                    </div>
+                    <div class="dashboard-card-body">
+                        <div class="mb-3">
+                            <div class="small text-muted">Fulfillment On-Time %</div>
+                            <div class="fs-4 fw-bold text-danger">{{ del_res.on_time_rate_pct }}%</div>
+                        </div>
+                        <ul class="list-unstyled small mb-0">
+                            {% for ins in del_res.insights %}
+                            <li class="mb-2"><i class="bi bi-chevron-right text-danger me-1"></i>{{ ins }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Domain AI Briefings -->
+    <div class="tab-pane fade" id="insights" role="tabpanel">
+        <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-file-earmark-text text-primary me-2"></i>Executive Intelligence Briefing</h6>
+            </div>
+            <div class="dashboard-card-body">
+                <div class="p-3 bg-light rounded border markdown-content">
+                    {{ exec_briefing | safe | replace('\n', '<br>') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-bag-check text-success me-2"></i>Commercial Sales & Catalog Dynamics</h6>
+            </div>
+            <div class="dashboard-card-body">
+                <div class="p-3 bg-light rounded border markdown-content">
+                    {{ sales_briefing | safe | replace('\n', '<br>') }}
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-truck text-warning me-2"></i>Logistical Risk & Delivery Network Analysis</h6>
+            </div>
+            <div class="dashboard-card-body">
+                <div class="p-3 bg-light rounded border markdown-content">
+                    {{ del_briefing | safe | replace('\n', '<br>') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 3: Strategic Recommendations -->
+    <div class="tab-pane fade" id="recommendations" role="tabpanel">
+        <div class="dashboard-card mb-4">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-bullseye text-primary me-2"></i>Prioritized Management Directives</h6>
+                <span class="badge bg-primary text-white">Actionable Roadmap</span>
+            </div>
+            <div class="dashboard-card-body">
+                <div class="p-3 bg-light rounded border markdown-content">
+                    {{ recs_text | safe | replace('\n', '<br>') }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

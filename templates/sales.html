@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Sales & Product Analytics — Commerce360 AI{% endblock %}
+{% block header_title %}Sales & Product Intelligence{% endblock %}
+{% block header_subtitle %}Revenue stream decomposition, category margins, and catalog performance{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-value text-primary">R$ {{ total_revenue | format_currency }}</div>
+            <div class="kpi-subtext">Sum of item sales</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Total Orders</div>
+            <div class="kpi-value">{{ total_orders | format_int }}</div>
+            <div class="kpi-subtext">Distinct order records</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Average Order Value (AOV)</div>
+            <div class="kpi-value text-success">R$ {{ aov | format_currency }}</div>
+            <div class="kpi-subtext">Gross revenue / order</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="kpi-card">
+            <div class="kpi-label">Units Sold</div>
+            <div class="kpi-value">{{ total_items | format_int }}</div>
+            <div class="kpi-subtext">Total catalog items dispatched</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="filter-bar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <form method="GET" action="{{ url_for('sales') }}" class="d-flex align-items-center flex-wrap gap-3 w-100">
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small fw-bold text-muted">Category:</label>
+            <select name="category" class="form-select form-select-sm" style="min-width: 220px;" onchange="this.form.submit()">
+                <option value="">All Categories (Default)</option>
+                {% for cat in all_categories %}
+                <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small fw-bold text-muted">Top N:</label>
+            <select name="top_n" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="10" {% if top_n == 10 %}selected{% endif %}>Top 10</option>
+                <option value="15" {% if top_n == 15 %}selected{% endif %}>Top 15</option>
+                <option value="25" {% if top_n == 25 %}selected{% endif %}>Top 25</option>
+            </select>
+        </div>
+        {% if selected_category %}
+        <a href="{{ url_for('sales') }}" class="btn btn-sm btn-outline-secondary">Clear Filter</a>
+        {% endif %}
+        <div class="ms-auto text-muted small">
+            <i class="bi bi-funnel me-1"></i> Interactive Slice & Dice
+        </div>
+    </form>
+</div>
+
+<!-- Charts Row 1: Category vs Product Ranking -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-diagram-3 text-primary me-2"></i>Revenue by Product Category (Top {{ top_n }})</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-cats" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-award text-warning me-2"></i>Top Grossing Products</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-prods" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2: State Distribution & Price Spread -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-geo-alt text-danger me-2"></i>Seller Geographic Revenue Distribution</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-state" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="dashboard-card h-100">
+            <div class="dashboard-card-header">
+                <h6 class="dashboard-card-title"><i class="bi bi-tag text-info me-2"></i>Product Price Distribution</h6>
+            </div>
+            <div class="dashboard-card-body p-2">
+                <div id="chart-price-dist" class="plotly-chart-container"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Top Products Table -->
+<div class="dashboard-card mb-4">
+    <div class="dashboard-card-header">
+        <h6 class="dashboard-card-title"><i class="bi bi-table text-primary me-2"></i>Top Product Catalog Performance</h6>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Aggregated Master</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-custom table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Product ID</th>
+                    <th>Category</th>
+                    <th class="text-end">Units Sold</th>
+                    <th class="text-end">Average Price</th>
+                    <th class="text-end">Average Freight</th>
+                    <th class="text-end">Total Gross Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prod in top_products_table %}
+                <tr>
+                    <td><code>{{ prod.product_id[:12] }}...</code></td>
+                    <td><span class="badge bg-light text-dark border">{{ prod.category }}</span></td>
+                    <td class="text-end fw-semibold">{{ prod.units_sold | format_int }}</td>
+                    <td class="text-end">R$ {{ prod.average_price | format_currency }}</td>
+                    <td class="text-end text-muted">R$ {{ prod.average_freight | format_currency }}</td>
+                    <td class="text-end fw-bold text-primary">R$ {{ prod.total_revenue | format_currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const catsJson = {{ chart_cats | safe }};
+    Plotly.newPlot('chart-cats', catsJson.data, catsJson.layout, {responsive: true});
+
+    const prodsJson = {{ chart_prods | safe }};
+    Plotly.newPlot('chart-prods', prodsJson.data, prodsJson.layout, {responsive: true});
+
+    const stateJson = {{ chart_state | safe }};
+    Plotly.newPlot('chart-state', stateJson.data, stateJson.layout, {responsive: true});
+
+    const priceDistJson = {{ chart_price_dist | safe }};
+    Plotly.newPlot('chart-price-dist', priceDistJson.data, priceDistJson.layout, {responsive: true});
+</script>
+{% endblock %}
